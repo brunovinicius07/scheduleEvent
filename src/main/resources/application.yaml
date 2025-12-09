@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: scheduleEvent
+
+  data:
+    mongodb:
+      uri: mongodb://mongo:27017/schedule_db
