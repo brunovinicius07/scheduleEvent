@@ -10,6 +10,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ScheduleEventMapper {
 
+
     ScheduleEvent toScheduleEvent(ScheduleEventRequest scheduleEventRequestDto);
 
     ScheduleEventResponse toScheduleEventResponseDto(ScheduleEvent scheduleEvent);

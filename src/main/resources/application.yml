@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: scheduleevent
+
+server:
+  port: 8082
+
+api:
+  security:
+    token:
+      secret: ${SECURITY_JWT_SECRET}
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG
+            repository:
+              query: DEBUG
