@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -34,6 +35,32 @@ public class ScheduleEventController {
         List<ScheduleEventResponse> response = scheduleEventService.getAllScheduleEventByIdUser(userId);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/day")
+    public ResponseEntity<List<ScheduleEventResponse>> getEventsByUserAndDay(@RequestParam Long userId,
+                                                                      @RequestParam LocalDate day) {
+        return ResponseEntity.ok(
+                scheduleEventService.getEventsByUserAndDay(userId, day)
+        );
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<List<Integer>> getDaysWithEventsInMonth(@RequestParam Long userId,
+                                                                  @RequestParam int year,
+                                                                  @RequestParam int month) {
+        return ResponseEntity.ok(
+                scheduleEventService.getDaysWithEventsInMonth(userId, year, month)
+        );
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity<List<ScheduleEventResponse>> getEventsByRange(@RequestParam Long userId,
+                                                                        @RequestParam LocalDate start,
+                                                                        @RequestParam LocalDate end) {
+        return ResponseEntity.ok(
+                scheduleEventService.getEventsByRange(userId, start, end)
+        );
     }
 
     @PutMapping("/put/{id}")

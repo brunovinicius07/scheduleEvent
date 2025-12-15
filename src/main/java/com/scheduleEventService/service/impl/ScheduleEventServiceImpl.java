@@ -45,6 +45,39 @@ public class ScheduleEventServiceImpl implements ScheduleEventService {
     }
 
     @Override
+    public List<ScheduleEventResponse> getEventsByUserAndDay(Long userId, LocalDate day) {
+        return scheduleEventMapper.toScheduleEventsResponse(repository.findEventsByUserIdAndDay(userId, day));
+    }
+
+    @Override
+    public List<Integer> getDaysWithEventsInMonth(Long userId, int year, int month) {
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        List<ScheduleEvent> events =
+                repository.findEventsByUserIdAndDayBetween(userId, start, end);
+
+        return events.stream()
+                .map(e -> e.getDay().getDayOfMonth())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    @Override
+    public List<ScheduleEventResponse> getEventsByRange(Long userId, LocalDate start, LocalDate end) {
+
+        List<ScheduleEvent> events = repository.findEventsByUserIdAndDayBetween(userId, start, end);
+
+        if (events.isEmpty()) {
+            throw new ScheduleEventNotFoundException();
+        }
+
+        return scheduleEventMapper.toScheduleEventsResponse(events);
+    }
+
+    @Override
     public ScheduleEventResponse updateScheduleEvent(String id, ScheduleEventRequest request) {
         ScheduleEvent scheduleEvent = validateScheduleEvent(id);
 
