@@ -79,20 +79,55 @@ public class ScheduleEventServiceImpl implements ScheduleEventService {
 
     @Override
     public ScheduleEventResponse updateScheduleEvent(String id, ScheduleEventRequest request) {
+
         ScheduleEvent scheduleEvent = validateScheduleEvent(id);
 
-        if (request.getOpening() != null && request.getClosure() != null) {
-            validateDayAndTimeOfEvent(request);
-        }
+        LocalDate finalDay = request.getDay() != null
+                ? request.getDay()
+                : scheduleEvent.getDay();
 
-        if (request.getDay() != null) scheduleEvent.setDay(request.getDay());
-        if (request.getOpening() != null) scheduleEvent.setOpening(request.getOpening());
-        if (request.getClosure() != null) scheduleEvent.setClosure(request.getClosure());
-        if (request.getTitle() != null) scheduleEvent.setTitle(request.getTitle());
+        LocalDateTime finalOpening = request.getOpening() != null
+                ? request.getOpening()
+                : scheduleEvent.getOpening();
 
-        scheduleEvent.setDescription(request.getDescription());
+        LocalDateTime finalClosure = request.getClosure() != null
+                ? request.getClosure()
+                : scheduleEvent.getClosure();
 
-        return scheduleEventMapper.toScheduleEventResponseDto(repository.save(scheduleEvent));
+        ScheduleEventRequest tempRequest = new ScheduleEventRequest(
+                scheduleEvent.getUserId(),
+                finalDay,
+                finalOpening,
+                finalClosure,
+                request.getTitle(),
+                request.getDescription()
+        );
+
+        validateDayAndTimeOfEvent(tempRequest);
+
+        validateConflictOnUpdate(
+                id,
+                scheduleEvent.getUserId(),
+                finalDay,
+                finalOpening
+        );
+
+        scheduleEvent.setDay(finalDay);
+        scheduleEvent.setOpening(finalOpening);
+        scheduleEvent.setClosure(finalClosure);
+        scheduleEvent.setTitle(
+                request.getTitle() != null
+                        ? request.getTitle()
+                        : scheduleEvent.getTitle()
+        );
+        scheduleEvent.setDescription(
+                request.getDescription() != null
+                        ? request.getDescription()
+                        : scheduleEvent.getDescription()
+        );
+
+        return scheduleEventMapper
+                .toScheduleEventResponseDto(repository.save(scheduleEvent));
     }
 
     @Override
@@ -104,7 +139,9 @@ public class ScheduleEventServiceImpl implements ScheduleEventService {
 
     @Override
     public void validateDayAndTimeOfEvent(ScheduleEventRequest request) {
+
         LocalDate day = request.getDay();
+
         LocalDateTime opening = request.getOpening();
         LocalDateTime closure = request.getClosure();
 
@@ -112,13 +149,13 @@ public class ScheduleEventServiceImpl implements ScheduleEventService {
             throw new DayToStartEventException();
         }
 
-        if (!(closure.toLocalDate().isEqual(day) ||
-                closure.toLocalDate().isEqual(day.plusDays(1)))) {
-            throw new DayFinishEventException();
+        if (!closure.isAfter(opening)) {
+            closure = closure.plusDays(1);
+            request.setClosure(closure);
         }
 
-        if (opening.isAfter(closure) || opening.isEqual(closure)) {
-            throw new HoursAfterException();
+        if (!closure.toLocalDate().isEqual(day) && !closure.toLocalDate().isEqual(day.plusDays(1))) {
+            throw new DayFinishEventException();
         }
     }
 
@@ -134,6 +171,19 @@ public class ScheduleEventServiceImpl implements ScheduleEventService {
     public ScheduleEvent validateScheduleEvent(String id) {
         return repository.findById(id)
                 .orElseThrow(ScheduleEventNotFoundException::new);
+    }
+
+    private void validateConflictOnUpdate(
+            String id,
+            Long userId,
+            LocalDate day,
+            LocalDateTime opening
+    ) {
+        repository
+                .findByUserIdAndDayAndOpeningAndIdNot(userId, day, opening, id)
+                .ifPresent(e -> {
+                    throw new ScheduleEventIsPresentException();
+                });
     }
 }
 

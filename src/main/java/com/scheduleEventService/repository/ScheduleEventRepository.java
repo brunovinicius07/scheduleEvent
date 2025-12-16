@@ -2,6 +2,7 @@ package com.scheduleEventService.repository;
 
 import com.scheduleEventService.model.entity.ScheduleEvent;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +17,11 @@ public interface ScheduleEventRepository extends MongoRepository<ScheduleEvent, 
 
     List<ScheduleEvent> findEventsByUserIdAndDay(Long userId, LocalDate day);
 
+    Optional<ScheduleEvent> findByUserIdAndDayAndOpeningAndIdNot(Long userId, LocalDate day, LocalDateTime opening,
+                                                                 String id
+    );
+
+    @Query("{ 'userId': ?0, 'day': { $gte: ?1, $lte: ?2 } }")
     List<ScheduleEvent> findEventsByUserIdAndDayBetween(Long userId, LocalDate start, LocalDate end);
 }
 
